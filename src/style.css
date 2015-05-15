@@ -1,0 +1,82 @@
+#container{
+  text-align : center ;
+}
+h2{
+  background-color : black ;
+  color : white ;
+  font-family : arial, sans-serif ;
+  border : 2px solid black ;
+  width : 498px ;
+  margin : auto ;
+  font-style : normal ;
+  padding-top : 0.25em ;
+  padding-bottom : 0.25em ;
+  margin-top : 20px ;
+}
+h2#room_name{
+  border-bottom : 2px solid white ;
+}
+#canvas{
+  margin : auto ;
+  border : 1px solid black ;
+}
+table#stats{
+  width : 500px ;
+  /*border : 1px solid black ;*/
+  margin : auto ;
+  margin-top : 10px ;
+}
+td, th{
+  width : 150px ;
+  height : 10px ;
+  font-size : 12pt ;
+  font-family : georgia , serif ;
+  font-weight : normal ;
+  text-align : center ;
+  border : 1px solid gray ;
+}
+td.true{
+  background-color : #ddffdd ;
+}
+td.false{
+  background-color : #ffdddd ;
+}
+
+table#inventory{
+  width : 500px ;
+  border : 2px solid black ;
+  margin : auto ;
+  margin-bottom : 10px ;
+}
+th.inventory{
+  text-align : center ;
+  font-family : arial , sans-serif ;
+  font-size : 16pt ;
+  width : 290px ;
+  color : #ffffff ;
+  background-color : #000000 ;
+}
+td.inventory{
+  width : 27px ;
+  height : 27px ;
+  padding : 1px ;
+  border : 1px solid black ;
+  margin : auto ;
+}
+td.mask{
+  width  : 6px ;
+  height : 6px ;
+  font-size : 4px ;
+  padding : 0px ;
+  line-height : 0px ;
+  color : white ;
+}
+
+td#canvas_wrapper{
+  width : 525px ;
+}
+button#button_save_image{
+  width : 500px ;
+  height : 50px ;
+  font : 25px arial ;
+}

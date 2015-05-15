@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg width="1200" height="600" xmlns="http://www.w3.org/2000/svg" version="1.2" 
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:xhtml="http://www.w3.org/1999/xhtml"
+xmlns:ev="http://www.w3.org/2001/xml-events"
+onload="start(evt)" id="global">
+
+<rect id="playArea" x="0" y="0" width="1200" height="600" fill-opacity="1" fill="rgb(255,255,255)"/>
+
+<g id="map" transform="translate(-600,-300)">  
+</g>
+<g id="player">
+  <rect id="playerFace"     x="-25"   y="-25" width="50" height="50" fill="rgb(255,200,200)" stroke="rgb(99,0,0)"/>
+  <rect id="playerLeftEye"  x="-12.5" y="-10" width="5"  height="5"  fill="rgb(099,000,000)" stroke="rgb(99,0,0)"/>
+  <rect id="playerRightEye" x="7.5"   y="-10" width="5"  height="5"  fill="rgb(099,000,000)" stroke="rgb(99,0,0)"/>
+  <rect id="playerMouth"    x="-20"   y="10"  width="40" height="5"  fill="rgb(255,255,255)" stroke="rgb(99,0,0)"/>
+</g>
+
+<text x="100" y="100" id="coinsText">Coins: </text>
+
+<script type="text/ecmascript">
+<![CDATA[
+var svgNS = "http://www.w3.org/2000/svg" ;
+
+var X     =  100 ;
+var Y     =    0 ;
+var step  =   25 ;
+var x     =  750 ; // player
+var y     =  200 ;
+var vx    =    0 ;
+var vy    =    0 ;
+var g     =  0.5 ;
+var air   = 0.05 ;
+var delay =   10 ;
+var count =    0 ;
+var stop  = 100000 ;
+var nCoins =    0 ;
+
+var solids = Array() ; var m=0 ; var n=0 ;
+var movers = Array() ;
+var points = Array() ;
+points[n] = new point(   0,   0) ; n++ ;
+points[n] = new point(2400,   0) ; n++ ;
+points[n] = new point(2400,1050) ; n++ ;
+points[n] = new point(   0,1050) ; n++ ;
+solids[m] = new solid('solid1',points,'rgb(200,255,200)','rgb(000,000,000)',0,1) ; m++ ;
+delete points ;
+
+var points = Array() ; var n=0 ;
+points[n] = new point(  10,380) ; n++ ;
+points[n] = new point( 920,380) ; n++ ;
+points[n] = new point( 920,620) ; n++ ;
+points[n] = new point( 880,620) ; n++ ;
+points[n] = new point( 880,420) ; n++ ;
+points[n] = new point(  10,420) ; n++ ;
+solids[m] = new solid('solid2',points,'rgb(200,200,200)','rgb(000,000,000)',1,1) ; m++ ;
+delete points ;
+
+var points = Array() ; var n=0 ;
+points[n] = new point( 600,300) ; n++ ;
+points[n] = new point( 700,300) ; n++ ;
+points[n] = new point( 700,320) ; n++ ;
+points[n] = new point( 600,320) ; n++ ;
+solids[m] = new solid('solid3',points,'rgb(200,200,200)','rgb(000,000,000)',1,1) ; m++ ;
+delete points ;
+
+var points = Array() ; var n=0 ;
+points[n] = new point(  10,380) ; n++ ;
+points[n] = new point(  10,200) ; n++ ;
+points[n] = new point( 190,380) ; n++ ;
+solids[m] = new solid('solid4',points,'rgb(200,200,200)','rgb(000,000,000)',1,1) ; m++ ;
+delete points ;
+
+n=0 ; m=0 ;
+var points = Array() ; var pathPoints = Array() ;
+points[n] = new point( 400,300) ; n++ ;
+points[n] = new point( 500,300) ; n++ ;
+points[n] = new point( 500,320) ; n++ ;
+points[n] = new point( 400,320) ; n++ ; n=0 ;
+pathPoints[n] = new point(  0,   0) ; n++ ;
+pathPoints[n] = new point(  0,-100) ; n++ ;
+pathPoints[n] = new point(  0,   0) ; n++ ;
+movers[m] = new mover('mover1',points,pathPoints,200,'rgb(200,200,200)','rgb(000,000,000)',1,1) ; m++ ;
+delete points ; delete pathPoints ;
+
+for(var i=0 ; i<solids.length ; i++){ draw(solids[i]) ; }
+for(var i=0 ; i<movers.length ; i++){ draw(movers[i]) ; }
+
+var coins = Array() ;
+var thePoint = new point(300,350) ;
+coins[0] = new coin('coin1',thePoint,5) ;
+for(var i=0 ; i<movers.length ; i++){ drawCoin(coins[i]) ; }
+
+function drawCoin(coin)
+{
+  var theCoin = make('circle',coin.id) ;
+  append('map',theCoin) ;
+  set(coin.id,'fill','rgb(255,255,0)') ;
+  set(coin.id,'stroke','rgb(0,0,0)') ;
+  set(coin.id,'cx',coin.point.x) ;
+  set(coin.id,'cy',coin.point.y) ;
+  set(coin.id,'r',10) ;
+}
+
+function coin(id,point,value)
+{
+  this.id = id ;
+  this.point = point ;
+  this.value = value ;
+  this.status = 1 ;
+}
+
+function moverDisplacement(mover)
+{
+  // Work out where we are in the path
+  var dx=0 ;
+  var dy=0 ;
+  var p = mover.period ;
+  if(mover.counter==p) mover.counter = 0 ;
+  var pathLength = 0 ;
+  var c = mover.counter ;
+  var l = mover.pathLengths[mover.pathPoints.length-1] ;
+  for(var j=0 ; j<mover.pathPoints.length ; j++)
+  {
+    pathLength = mover.pathLengths[j] ;
+    if(pathLength/l>c/p)
+    {
+      // The mover should be between vertices j-1 and j of its path.
+      // Work out where and move it there
+      var d = l*c/p - mover.pathLengths[j-1] ; // Distance after the relevant pathPoint
+      var fraction = d/distance(mover.pathPoints[j-1],mover.pathPoints[j]) ;
+      // dx and dy are displacement from "nominal" position
+      dx = mover.pathPoints[j-1].x + fraction*(mover.pathPoints[j].x-mover.pathPoints[j-1].x) ;
+      dy = mover.pathPoints[j-1].y + fraction*(mover.pathPoints[j].y-mover.pathPoints[j-1].y) ;
+      break ;
+    }
+  }
+  var displacement = new point(dx,dy) ;
+  return displacement ;
+}
+
+function updateMap()
+{
+  // Update movers
+  if(true)
+  {
+    for(var i=0 ; i<movers.length ; i++)
+    {
+      var d0 = moverDisplacement(movers[i]) ;
+      movers[i].counter++ ;
+      var d = moverDisplacement(movers[i]) ;
+      set(movers[i].id,'transform','translate('+d.x+','+d.y+')') ;
+      for(var k=0 ; k<movers[i].points.length ; k++)
+      {
+        movers[i].points[k].x = movers[i].basePoints[k].x + d.x ;
+        movers[i].points[k].y = movers[i].basePoints[k].y + d.y ;
+      }
+      if(checkIntersection(movers[i])==true)
+      {
+        x += d.x-d0.x ;
+        y += d.y-d0.y ;
+      }
+    }
+  }
+  updatePlayer() ;
+}
+
+function updatePlayer()
+{
+  // Attempt to move player
+  var x0 = x ;
+  var y0 = y ;
+  var v = Math.sqrt(vx*vx+vy*vy) ;
+  if(onSolidGround()==false) vy += g ;
+  if(vx>0) vx -= air ;
+  if(vx<0) vx += air ;
+  for(var i=0 ; i<v ; i++)
+  {
+    x = x0 + vx*i/v ;
+    y = y0 + vy*i/v ;
+    if(checkIntersections()==true)
+    {
+      if(i>0)
+      {
+        x = x0 + vx*(i-1)/v ;
+        y = y0 + vy*(i-1)/v ;
+      }
+      vx = 0 ;
+      vy = 0 ;
+      break ;
+    }
+  }
+  if(x<75)
+  {
+    var dx = 500 ;
+    x = x+dx ;
+    if(checkIntersections())
+    {
+      x = x-dx ;
+    }
+    else
+    {
+      X = X+dx ;
+      set('map','transform','translate('+X+','+Y+')') ;
+    }
+  }
+  if(x>1100)
+  {
+    var dx = -500 ;
+    x = x+dx ;
+    if(checkIntersections())
+    {
+      x = x-dx ;
+    }
+    else
+    {
+      X = X+dx ;
+      set('map','transform','translate('+X+','+Y+')') ;
+    }
+  }
+  if(y<75)
+  {
+    var dy = 300 ;
+    y = y+dy ;
+    if(checkIntersections())
+    {
+      y = y-dy ;
+    }
+    else
+    {      
+      Y = Y+dy ;
+      set('map','transform','translate('+X+','+Y+')') ;
+    }
+  }
+  if(y>500)
+  {
+    var dy = -300 ;
+    y = y+dy ;
+    if(checkIntersections())
+    {
+      y = y-dy ;
+    }
+    else
+    {
+      Y = Y+dy ;
+      set('map','transform','translate('+X+','+Y+')') ;
+    }
+  }
+  for(var i=0 ; i<coins.length ; i++)
+  {
+    if(coins[i].status==1)
+    {
+      if(x-X>coins[i].point.x-5 && x-X<coins[i].point.x+5 && y-Y>coins[i].point.y-5 && y-Y<coins[i].point.y+5) removeCoin(coins[i]) ;
+    }
+  }
+  placePlayer() ;
+  count++ ;
+  if(count<stop) window.setTimeout("updateMap()", delay) ;
+}
+
+function stinger(id,points,strokeColor,speed)
+{
+  this.id = id ;
+  this.points = points ;
+  this.strokeColor = strokeColor ;
+  this.speed = speed ;
+}
+
+function solid(id,points,fillColor,strokeColor,fillOpacity,strokeOpacity)
+{
+  this.id = id ;
+  this.points        = points ;
+  this.fillColor     = fillColor ;
+  this.strokeColor   = strokeColor ;
+  this.fillOpacity   = fillOpacity ;
+  this.strokeOpacity = strokeOpacity ;
+}
+
+function mover(id,points,pathPoints,period,fillColor,strokeColor,fillOpacity,strokeOpacity)
+{
+  this.id = id ;
+  this.basePoints    = points ;
+  this.points        = Array() ;
+  for(var i=0 ; i<points.length ; i++) { this.points[i] = new point(points[i].x,points[i].y) ; }
+  this.pathPoints    = pathPoints ;
+  this.fillColor     = fillColor ;
+  this.strokeColor   = strokeColor ;
+  this.fillOpacity   = fillOpacity ;
+  this.strokeOpacity = strokeOpacity ;
+  this.period        = period ;
+  this.counter       = 0 ;
+  this.pathLengths   = Array() ;
+  var pathSegments   = Array() ;
+  this.pathLengths[0] = 0 ;
+  for(var i=1 ; i<pathPoints.length ; i++){ pathSegments[i] = distance(this.pathPoints[i],this.pathPoints[i-1]) ; }
+  for(var i=1 ; i<pathPoints.length ; i++){ this.pathLengths[i] = this.pathLengths[i-1] + pathSegments[i] ; }
+}
+function distance2(p1,p2){ return (p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y) } ;
+function distance(p1,p2){ return Math.sqrt(distance2(p1,p2)) ; }
+
+function path(object)
+{
+  var path = 'M ' + object.points[0].x + ' ' + object.points[0].y ;
+  for(var i=1 ; i<object.points.length ; i++){ path = path + ' L ' + object.points[i].x + ' ' + object.points[i].y ; }
+  path = path + ' L ' + object.points[0].x + ' ' + object.points[0].y ;
+  return path ;
+}
+function draw(object)
+{
+  var shape = make('path',object.id) ;
+  append('map',shape) ;
+  set(object.id,'d'     ,path(object)      ) ;
+  set(object.id,'stroke',object.strokeColor) ;
+  set(object.id,'fill'  ,object.fillColor  ) ;
+}
+function point(x,y){ this.x=x ; this.y=y ;}
+
+function start(evt)
+{
+  document.documentElement.addEventListener('keypress',key,false) ;
+  document.documentElement.addEventListener('keyup',keyup,false) ;
+  placePlayer() ;
+  set('map','transform','translate('+X+','+Y+')') ;
+  updateMap() ;
+}
+function keyup(evt)
+{
+  if(evt.type == "keyup")
+  {
+    //some browsers support evt.charCode, some only evt.keyCode
+    if(evt.charCode){ var charCode = evt.charCode ; }
+    else{             var charCode = evt.keyCode  ; }
+    if(charCode==37) { evt.preventDefault() ; vx = 0 ; }
+    if(charCode==39) { evt.preventDefault() ; vx = 0 ; }
+  }
+}
+function key(evt)
+{
+  if(evt.type == "keypress")
+  {
+    //some browsers support evt.charCode, some only evt.keyCode
+    if(evt.charCode){ var charCode = evt.charCode ; }
+    else{             var charCode = evt.keyCode  ; }
+    if(charCode==37) { evt.preventDefault() ; left()  ; }
+    if(charCode==38) { evt.preventDefault() ; up()    ; }
+    if(charCode==39) { evt.preventDefault() ; right() ; }
+    if(charCode==40) { evt.preventDefault() ; down()  ; }
+  }
+}
+
+function  left()
+{
+  if(vx==0){ vx = -5 ; }
+  else if(vx>-10){ vx-- ; }
+}
+function right()
+{
+  if(vx==0){ vx = 5 ; }
+  else if(vx<10){ vx++ ; }
+}
+function up(){ if(onSolidGround()>0) vy = -10 ; }
+function down(){}
+
+function onSolidGround()
+{
+  y++ ; var result = checkIntersections() ; y-- ;
+  return result ;
+}
+function checkIntersections()
+{
+  var allSolids = Array() ;
+  var counter = 0 ;
+  for(var i=0 ; i<solids.length ; i++){ allSolids[counter] = solids[i] ; counter++ ; }
+  for(var i=0 ; i<movers.length ; i++){ allSolids[counter] = movers[i] ; counter++ ; } 
+  for(var i=0 ; i<allSolids.length ; i++){ if(checkIntersection(allSolids[i])>0) return checkIntersection(allSolids[i]) ; }
+  return 0 ;
+}
+
+function checkIntersection(object)
+{
+  var uValues = Array() ; var vValues = Array() ;
+  var xValues = Array() ; var yValues = Array() ;
+  xValues[0] = x-X-25 ; yValues[0] = y-Y-25 ;
+  xValues[1] = x-X-25 ; yValues[1] = y-Y+25 ;
+  xValues[2] = x-X+25 ; yValues[2] = y-Y+25 ;
+  xValues[3] = x-X+25 ; yValues[3] = y-Y-25 ;
+  for(var j=0 ; j<xValues.length ; j++)
+    {
+      for(var k=0 ; k<object.points.length ; k++)
+      {
+        var x1 = xValues[(j+0)%xValues.length] ; var y1 = yValues[(j+0)%yValues.length] ;
+        var x2 = xValues[(j+1)%xValues.length] ; var y2 = yValues[(j+1)%yValues.length] ;
+        var x3 = object.points[(k+0)%object.points.length].x ; var y3 = object.points[(k+0)%object.points.length].y ;
+        var x4 = object.points[(k+1)%object.points.length].x ; var y4 = object.points[(k+1)%object.points.length].y ;
+        var denominator = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1) ;
+        if(denominator==0) continue ;
+        var numeratorA = (x4-x3)*(y1-y3)-(y4-y3)*(x1-x3) ;
+        var numeratorB = (x2-x1)*(y1-y3)-(y2-y1)*(x1-x3) ;
+        var fA = numeratorA/denominator ;
+        var fB = numeratorB/denominator ;
+        if(fA>0  && fA<1  && fB>0  && fB<1 ) return 1 ;
+        if(fA>=0 && fA<=1 && fB>=0 && fB<=1) return 2 ;
+      }
+    }
+}
+
+function placePlayer(){ set('player','transform','translate('+x+','+y+')') ; }
+
+function removeCoin(coin)
+{
+  coin.status = 0 ;
+  set(coin.id,'opacity',0) ;
+  incrementCoins(coin) ;
+}
+
+function incrementCoins(coin)
+{
+  nCoins += coin.value ;
+  setText('coinsText','Coins: ' + nCoins) ;
+}
+
+function make(type,id)
+{
+  var thisObject = document.createElementNS(svgNS,type) ;
+  thisObject.setAttributeNS(null,"id",id) ;
+  return thisObject ;
+}
+function set(elementId, attribute, value) { document.getElementById(elementId).setAttributeNS(null,attribute,value) ; }
+function get(elementId, attribute) { return document.getElementById(elementId).getAttributeNS(null,attribute) ; }
+function append(parentId, child){ document.getElementById(parentId).appendChild(child) ; }
+function select(id){ return document.getElementById(id) ; }
+function setText(elementId, text)
+{
+  var textNode = select(elementId).firstChild ;
+  textNode.replaceWholeText(text) ;
+}
+
+//]]>
+</script>
+
+</svg>

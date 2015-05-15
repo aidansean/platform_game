@@ -1,0 +1,168 @@
+td
+{
+  width : 25px ;
+  height : 25px ;
+  padding : 0px ;
+  font-size : 10px ;
+  line-height : 10px ;
+}
+td.room
+{
+  border : 1px solid black ;
+  background-color : #eeeeee ;
+}
+td.outside_room
+{
+  opacity : 0.5 ;
+}
+td.frg{ }
+table{ margin : 10px ; }
+table#table_room
+{
+  border : 2px solid black ;
+  border-collapse : separate ;
+  margin : auto ;
+  background : #aaaaaa ;
+  cell-spacing : 1px ;
+}
+div#container{ padding : 10px ; }
+canvas.canvas_selection      { border : 2px solid  black ; opacity : 0.6 ; }
+canvas.canvas_selection:hover{ border : 2px dashed white ; opacity : 0.8 ; }
+canvas.canvas_selected       { border : 2px solid  white ; opacity : 1.0 ; }
+cavnas{ margin : 0px ; }
+table#table_shape, table#table_foreground
+{
+  border : 1px solid black ;
+  border-collapse : collapse ;
+  background-color : black ;
+}
+td#uber_cell_A, td#uber_cell_B, td#uber_cell_C, td#uber_cell_D, td#uber_cell_E, td#uber_cell_F, td#uber_cell_G
+{
+  vertical-align : top ;
+  text-align : center ;
+}
+td#uber_cell_A
+{
+  width: 200px ;
+  height : 150px ;
+}
+td#uber_cell_A, td#uber_cell_G
+{
+  background-color : #FF1800 ;
+}
+td#uber_cell_B
+{
+  width: 600px ;
+  height : 400px ;
+}
+td#uber_cell_B, td#uber_cell_H
+{
+  background-color : #00C12B ;
+}
+td#uber_cell_C
+{
+  width: 200px ;
+  height : 75px ;
+  background-color : #04859D ;
+}
+td#uber_cell_D
+{
+  width: 200px ;
+  height : 75px ;
+  background-color : #FF7C00 ;
+}
+td#uber_cell_E
+{
+  width: 200px ;
+  height : 75px ;
+  background-color : #04859D ;
+}
+td#uber_cell_F, td#uber_cell_G, td#uber_cell_H
+{
+  width: 800px ;
+  height : 100px ;
+}
+td#uber_cell_F{ background-color : #444444 ; }
+h2
+{
+  text-align : center ;
+  font-family : arial , sans-serif ;
+  font-size : 16pt ;
+  color : white ;
+}
+th.info
+{
+  color : white ;
+  font-size : 10pt ;
+  text-align : right ;
+  font-family : arial , sans-serif ;
+}
+td.info
+{
+  color : white ;
+  font-size : 10pt ;
+  text-align : left ;
+}
+h1
+{
+  text-align : center ;
+  font-family : georgia , serif ;
+  font-style : italic ;
+  font-size : 24pt ;
+  margin : 0px ;
+}
+table#uber_table
+{
+  border : 1px solid black ;
+  margin : auto ;
+  margin-top : 0px ;
+}
+textarea#textarea_output
+{
+  width : 800px ;
+  margin : auto ;
+}
+canvas
+{
+ margin : 0px ;
+ display : block ;
+}
+canvas#canvas_current_cell
+{
+  opacity : 1 ;
+}
+td#shape_0
+{
+  border : 1px dashed white ;
+}
+table#table_room_name
+{
+  width : 400px ;
+  margin : auto ;
+}
+
+table#table_map
+{
+  border : 1px solid blue ;
+  margin : auto ;
+}
+td.map_empty_room, td.map_occupied_room, td.map_current_room
+{
+  width : 25px ;
+  height : 25px ;
+}
+td.map_empty_room
+{
+  background-color : #ffdddd ;
+  border : 1px solid red ;
+}
+td.map_occupied_room
+{
+  background-color : #ddffdd ;
+  border : 1px solid green ;
+}
+td.map_current_room
+{
+  background-color : #ddffdd ;
+  border : 3px solid green ;
+}

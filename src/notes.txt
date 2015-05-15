@@ -1,0 +1,38 @@
+aaabbcc
+
+a : Type (solid, water, etc)
+b : Background image
+c : Mask shape
+
+
+a values
+1: solid
+2: water
+3: fire
+4: ladder
+
+b values
+01: red/yellow bricks
+
+c values
+01: square
+11: upper left triangle
+13: upper right triangle
+17: lower left triangle
+19: lower right triangle
+21: upper left half triangle
+22: upper half square
+23: upper right half triangle
+24: left half square
+25: square
+26: right half square
+27: lower left half triangle
+28: lower half square
+29: lower right half triangle
+31: lower right corner
+33: lower left corner
+37: upper right corner
+39: upper left corner
+
+0010101 : bricks
+0010111 : 

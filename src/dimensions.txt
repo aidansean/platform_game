@@ -1,0 +1,23 @@
+20x16
+
+1760 pixels down
+10 rooms down
+176 pixels per room down
+16 pixels per row
+room is 10 rows + 2 half rows down
+
+11520 pixels across
+16 cols per room
+36 rooms across
+20 pixels per col across
+
+
+
+320x192
+
+
+Great Hall: 18x6
+
+
+
+

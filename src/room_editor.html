@@ -1,0 +1,713 @@
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
+'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>Room editor</title>
+<link type="text/css" rel="stylesheet" media="all" href="editor_style.css" />
+
+<script type="text/ecmascript" src="js/settings.js"></script>
+<script type="text/ecmascript" src="js/block.js"></script>
+<script type="text/ecmascript" src="js/colors.js"></script>
+<script type="text/ecmascript" src="js/patterns.js"></script>
+<script type="text/ecmascript" src="js/shapes.js"></script>
+<script type="text/ecmascript" src="js/room.js"></script>
+<script type="text/ecmascript" src="js/movers.js"></script>
+<script type="text/ecmascript" src="js/rooms_data.js"></script>
+
+<script type="text/ecmascript">
+var brush = new Array() ;
+brush['shape'     ] =  0 ;
+brush['foreground'] =  0 ;
+brush['background'] =  0 ;
+brush['obstacle'  ] =  0 ;
+brush['medium'    ] =  0 ;
+var cell_contents = 0 ;
+update_cell_contents() ;
+var context = 0 ;
+var body    = 0 ;
+var painter = 'point' ;
+var painter_X = -1 ;
+var painter_Y = -1 ;
+
+// Coordinates relative to centre of map
+var X = 2 ;
+var Y = 1 ;
+var X_offset = 0 ;
+var Y_offset = 0 ;
+
+var nRoomsX = rooms[0].length ;
+var nRoomsY = rooms.length ;
+var room  = rooms[Y][X] ;
+var cells = room.rows ;
+
+//var foregrounds = new Array() ;
+
+function start(){
+  // Set values
+  body = document.getElementsByTagName('body')[0] ;
+
+  // Make room
+  var tbody = Get('tbody_room') ;
+  for(var i=-1 ; i<=nRows ; i++){
+    var tr = Create('tr') ;
+    for(var j=-1 ; j<=nCols ; j++){
+      var td = Create('td') ;
+      td.id    = 'td_' + (j) + '_' + (i) ;
+      td.title = '('   + (j) + ',' + (i) + ')' ;
+      var inside = (i>=0 && i<nRows && j>=0 && j<nCols) ;
+      td.className = (inside) ? 'room' : 'room outside_room' ;
+      var canvas_id = 'cell_'+j+'_'+i ;
+      var canvas_title = canvas_id + ' ((' + (cw*j) + ',' + (ch*i) + ')  (' + (cw*(j+1)) + ',' + (ch*(i+1)) + '))' ;
+      cell = [0,0,0,0,0,[]] ;
+      td.appendChild( make_mini_canvas(canvas_id, canvas_title, cell, 'cell') ) ;
+      tr.appendChild(td) ;
+    }
+    tbody.appendChild(tr) ;
+  }
+  update_all_cells() ;
+
+  // Make preview canvas
+  var canvas = make_mini_canvas('canvas_current_cell', 0, cell_contents, 'current_cell', true) ;
+  canvas.id = 'canvas_current_cell' ;
+  Get('td_current_cell').appendChild( canvas ) ;
+
+  // Make foreground blocks
+  for(var i=1 ; i<=8 ; i++ ){ Get('foreground_'+i).appendChild( make_mini_canvas('canvas_foreground_'+i, i, [15,i,0,0,0,[]], 'foreground', true) ) ; }
+
+  // Make background blocks
+  for(var i=0 ; i<=6 ; i++ ){ Get('background_'+i).appendChild( make_mini_canvas('canvas_background_'+i, i, [15,0,i,0,0,[]], 'background', true) ) ; }
+  for(var i=1 ; i<=6 ; i++ ){ Get('background_'+(1000+i)).appendChild( make_mini_canvas('canvas_background_'+(i+1000), i+1000, [15,0,i+1000,0,0,[]], 'background', true) ) ; }
+
+  // Make shape blocks
+  Get('shape_0').appendChild( make_mini_canvas('canvas_shape_0', 0, [0,1,0,0,0,[]], 'shape') ) ;
+  for(var i=11 ; i<=19 ; i++ ){ Get('shape_'+i).appendChild( make_mini_canvas('canvas_shape_'+i, i, [i,1,0,0,0,[]], 'shape', true) ) ; }
+  for(var i=21 ; i<=28 ; i++ ){ Get('shape_'+i).appendChild( make_mini_canvas('canvas_shape_'+i, i, [i,1,0,0,0,[]], 'shape', true) ) ; }
+  for(var i=31 ; i<=38 ; i++ ){ Get('shape_'+i).appendChild( make_mini_canvas('canvas_shape_'+i, i, [i,1,0,0,0,[]], 'shape', true) ) ; }
+  for(var i=41 ; i<=49 ; i++ ){ if(i==45) continue ; Get('shape_'+i).appendChild( make_mini_canvas('canvas_shape_'+i, i, [i,1,0,0,0,[]], 'shape', true) ) ; }
+  for(var i=51 ; i<=59 ; i+=2){ if(i==55) continue ; Get('shape_'+i).appendChild( make_mini_canvas('canvas_shape_'+i, i, [i,1,0,0,0,[]], 'shape', true) ) ; }
+
+  // Surround rooms with empty rooms
+  var row = new Array() ;
+  for(var i=0 ; i<rooms[0].length ; i++){
+    row.push(new room_object()) ;
+  }
+  //rooms.splice(0,0,row) ;
+  rooms.push(row) ;
+  for(var i=0 ; i<rooms.length ; i++){
+    rooms[i].splice(0,0,new room_object()) ;
+    rooms[i].push(new room_object()) ;
+  }
+
+  update() ;
+
+  brush['obstacle'  ] = 1 ;
+  update_cell_contents() ;
+  update_all_cells() ;
+}
+
+function update_all_cells(){
+  // First scan to see if all the rooms exist, and if not, add them
+  if(Y==0){
+    var row = new Array() ;
+    for(var i=0 ; i<rooms[0].length ; i++){
+      row.push(new room_object()) ;
+    }
+    rooms.splice(0,0,row) ;
+    Y++ ;
+  }
+  else if(Y==rooms.length-1){
+    var row = new Array() ;
+    for(var i=0 ; i<rooms[0].length ; i++){
+      row.push(new room_object()) ;
+    }
+    rooms.push(row) ;
+  }
+  if(X==0){
+    for(var i=0 ; i<rooms.length ; i++){
+      rooms[i].splice(0,0,new room_object()) ;
+    }
+    X++ ;
+  }
+  else if(X==rooms[Y].length-1){
+    for(var i=0 ; i<rooms.length ; i++){
+      rooms[i].push(new room_object()) ;
+    }
+  }
+
+  // Now update all the cells, including those of surrounding rooms
+  for(var i=-1 ; i<=nRows ; i++){
+    var Ytmp = Y ;
+    if(i==-1   ) Ytmp-- ;
+    if(i==nRows) Ytmp++ ;
+    for(var j=-1 ; j<=nCols ; j++){
+      var Xtmp = X ;
+      if(j==-1   ) Xtmp-- ;
+      if(j==nCols) Xtmp++ ;
+
+      var i_ = i ;
+      var j_ = j ;
+      if(i==-1   ) i_ = nRows-1 ;
+      if(i==nRows) i_ = 0 ;
+      if(j==-1   ) j_ = nCols-1 ;
+      if(j==nCols) j_ = 0 ;
+      var cell = rooms[Ytmp][Xtmp].rows[i_][j_] ;
+      update_mini_canvas(Get('cell_'+j+'_'+i), cell) ;
+    }
+  }
+}
+
+function update_cell_contents(){
+  cell_contents = [brush['shape'],brush['foreground'],brush['background'],brush['obstacle'],brush['medium'],[]] ;
+}
+
+function update(do_write_output=true){
+  update_cell_contents() ;
+
+  Get('td_AB'              ).innerHTML = '(' + X + ',' + Y + ')' ;
+  Get('td_brush_shape'     ).innerHTML = brush['shape'     ] ;
+  Get('td_brush_foreground').innerHTML = brush['foreground'] ;
+  Get('td_brush_background').innerHTML = brush['background'] ;
+  Get('td_brush_obstacle'  ).innerHTML = brush['obstacle'  ] ;
+  Get('td_brush_medium'    ).innerHTML = brush['medium'    ] ;
+  Get('td_cell_contents'   ).innerHTML = cell_contents ;
+
+  var tds = getElementsByClassName('canvas_selected') ;
+  for(var i=0 ; i<tds.length ; i++){ tds[i].className = 'canvas_selection' ; }
+  if(Get('canvas_shape_'     +brush['shape'     ])) Get('canvas_shape_'     +brush['shape'     ]).className = 'canvas_selected' ;
+  if(Get('canvas_foreground_'+brush['foreground'])) Get('canvas_foreground_'+brush['foreground']).className = 'canvas_selected' ;
+  if(Get('canvas_background_'+brush['background'])) Get('canvas_background_'+brush['background']).className = 'canvas_selected' ;
+
+  Get('room_name').value = room.name ;
+
+  update_mini_canvas(Get('canvas_current_cell'), cell_contents) ;
+  update_map() ;
+
+  update_all_cells() ;
+  if(do_write_output) write_output() ;
+}
+
+function write_output(){
+  var text = '\nrooms = [\n' ;
+  for(var B=0 ; B<rooms.length-1 ; B++){
+    if(B>1) text = text + ',' ;
+    text = text + '  [' ;
+    for(var A=1 ; A<rooms[B].length-1 ; A++){
+      if(A>1) text = text + ',' ;
+      text = text + write_room_output(A,B) ;
+    }
+    text = text + '  ]\n' ;
+  }
+  text = text + ']\n;\n' ;
+  Get('textarea_output').innerHTML = text ;
+}
+
+function write_room_output(A_,B_){
+  var name = (rooms[B_][A_].name) ? rooms[B_][A_].name : "Nothingness" ;
+  var text = '      new room_object("' + name + '",\n      [\n' ;
+  var cells = rooms[B_][A_].rows ;
+  for(var i=0 ; i<nRows ; i++){
+    if(i>0){
+      text = text + ',       [' ;
+    }
+    else{
+      text = text + '        [' ;
+    }
+    for(var j=0 ; j<nCols ; j++){
+      if(j>0) text = text + ',' ;
+      var snippet = '[' + cells[i][j][0] + ',' +cells[i][j][1] + ',' + cells[i][j][2] + ',' + cells[i][j][3] + ',' + cells[i][j][4] + ',[] ]' ;
+      if(snippet=='[0,0,0,0,0,[] ]') snippet = '0' ;
+      text = text + ' ' + snippet ;
+    }
+    text = text + '      ]\n' ;
+  }
+  text = text + '      ]\n' ;
+  text = text + '    ,[])\n' ;
+  return text ;
+}
+
+function update_mini_canvas(canvas, args){
+  context = canvas.getContext('2d') ;
+  var b = new block() ;
+  b.populate(args, 0, 0) ;
+  b.draw(true) ;
+}
+
+function cells_match(k, l, i, j){
+  var cell_A = cells[k][l] ;
+  var cell_B = cells[i][j] ;
+  for(var m=0 ; m<cell_A.length ; m++){
+    if(cell_A[m] != cell_B[m]){
+      return false ;
+    }
+  }
+  return true ;
+}
+
+function make_mini_canvas(name, title, args, brush_name, transparent=false){
+  var canvas = Create('canvas') ;
+  canvas.style.width  = cw ;
+  canvas.style.height = ch ;
+  canvas.width  = cw ;
+  canvas.height = ch ;
+  canvas.id = name ;
+  canvas.onclick = function(e){
+    if(e.target.title.match('cell_')){
+      var parts = e.target.title.split('_') ;
+      var i = parts[1] ;
+      var j = parts[2] ;
+      if(i<0 || i==nCols || j<0 || j==nRows){
+        if(i<0)      X-- ;
+        if(i==nCols) X++ ;
+        if(j<0)      Y-- ;
+        if(j==nRows) Y++ ;
+        room = get_room_coords(X,Y) ;
+        cells = room.rows ;
+        update(true) ;
+        write_output() ;
+        update_all_cells() ;
+      }
+      else{
+        switch(painter){
+          case 'point':
+            rooms[Y][X].rows[j][i] = cell_contents ;
+            update() ;
+          break ;
+
+          case 'line':
+            if(painter_X==-1 && painter_Y==-1){ // Select start
+              painter_X = i ;
+              painter_Y = j ;
+              Get('cell_'+i+'_'+j).style.opacity = 0.5 ;
+            }
+            else{
+              if(i==painter_X && j==painter_Y){ // Reset
+                painter_X = -1 ;
+                painter_Y = -1 ;
+              }
+              else if(i==painter_X && j!=painter_Y){ // Vertical line
+                var yLow  = Math.min(j,painter_Y) ;
+                var yHigh = Math.max(j,painter_Y) ;
+                for(var k=yLow ; k<=yHigh ; k++){
+                  rooms[Y][X].rows[k][i] = cell_contents ;
+                  update() ;
+                }
+                Get('cell_'+painter_X+'_'+painter_Y).style.opacity = 1.0 ;
+                painter_X = -1 ;
+                painter_Y = -1 ;
+              }
+              else if(i!=painter_X && j==painter_Y){ // Horizontal line
+                var xLow  = Math.min(i,painter_X) ;
+                var xHigh = Math.max(i,painter_X) ;
+                for(var k=xLow ; k<=xHigh ; k++){
+                  rooms[Y][X].rows[j][k] = cell_contents ;
+                }
+                Get('cell_'+painter_X+'_'+painter_Y).style.opacity = 1.0 ;
+                painter_X = -1 ;
+                painter_Y = -1 ;
+                update() ;
+              }
+              else{ // Do nothing
+              }
+            }
+          break ;
+
+          case 'rectangle':
+            if(painter_X==-1 && painter_Y==-1){ // Select start
+              painter_X = i ;
+              painter_Y = j ;
+              Get('cell_'+i+'_'+j).style.opacity = 0.5 ;
+            }
+            else{
+              if(i==painter_X && j==painter_Y){ // Reset
+                painter_X = -1 ;
+                painter_Y = -1 ;
+              }
+              else{ // Rectangle
+                var xLow  = Math.min(i,painter_X) ;
+                var xHigh = Math.max(i,painter_X) ;
+                var yLow  = Math.min(j,painter_Y) ;
+                var yHigh = Math.max(j,painter_Y) ;
+                for(var k=yLow ; k<=yHigh ; k++){
+                  for(var l=xLow ; l<=xHigh ; l++){
+                    rooms[Y][X].rows[k][l] = cell_contents ;
+                  }
+                }
+                Get('cell_'+painter_X+'_'+painter_Y).style.opacity = 1.0 ;
+                painter_X = -1 ;
+                painter_Y = -1 ;
+                update() ;
+              }
+            }
+          break ;
+
+          case 'fill':
+            var pixel_status = new Array() ;
+            for(var k=0 ; k<nRows ; k++){
+              pixel_status[k] = new Array() ;
+                for(var l=0 ; l<nCols ; l++){
+                pixel_status[k][l] = 0 ;
+              }
+            }
+            pixel_status[j][i] = 1 ;
+            var done = false ;
+            while(done==false){
+              done = true ;
+              for(var k=0 ; k<nRows ; k++){
+                for(var l=0 ; l<nCols ; l++){
+                  if(pixel_status[k][l]==1){
+                    done = false ;
+                    pixel_status[k][l] = 2 ;
+                    if(k>0){
+                      if(pixel_status[k-1][l]==0 && cells_match(k-1, l, j, i)) pixel_status[k-1][l] = 1 ;
+                    }
+                    if(k<nRows-1){
+                      if(pixel_status[k+1][l]==0 && cells_match(k-1, l, j, i)) pixel_status[k+1][l] = 1 ;
+                    }
+                    if(l>0){
+                      if(pixel_status[k][l-1]==0 && cells_match(k-1, l, j, i)) pixel_status[k][l-1] = 1 ;
+                    }
+                    if(l<nCols-1){
+                      if(pixel_status[k][l+1]==0 && cells_match(k-1, l, j, i)) pixel_status[k][l+1] = 1 ;
+                    }
+                  }
+                }
+              }
+            }
+            for(var k=0 ; k<nRows ; k++){
+              for(var l=0 ; l<nCols ; l++){
+                if(pixel_status[k][l]==2){
+                  rooms[Y][X].rows[k][l] = cell_contents ;
+                }
+              }
+            }
+            update() ;
+          break ;
+        }
+      }
+    }
+    else{
+      brush[brush_name] = e.target.title ;
+    }
+    update() ;
+  }
+  context = canvas.getContext('2d') ;
+  createPatterns() ;
+  var b = new block() ;
+  b.populate(args, 0, 0) ;
+  b.draw(true) ;
+  if(transparent) canvas.className = 'canvas_selection' ;
+  canvas.title = title ;
+  return canvas ;
+}
+
+function update_medium(){
+  brush['medium'] = Get('medium').value ;
+  update(false) ;
+}
+function update_obstacle(){
+  brush['obstacle'] = Get('obstacle').value ;
+  update(false) ;
+}
+function update_painter(){
+  painter = Get('painter').value ;
+  update(false) ;
+}
+
+function update_map(){
+  var tbody = Get('tbody_map') ;
+  var children = tbody.childNodes ;
+  for(var i=children.length-1 ; i>=0 ; i--){
+    tbody.removeChild(children[i]) ;
+  }
+  var max_row_size = 0 ;
+  for(var B=0 ; B<rooms.length ; B++){
+    if(rooms[B].length > max_row_size) max_row_size = rooms[B].length ;
+  }
+  for(var B=0 ; B<rooms.length ; B++){
+    var tr = Create('tr') ;
+    for(var A=0 ; A<rooms[B].length ; A++){
+      var td = Create('td') ;
+      var name = rooms[B][A].name ;
+      if(A-X_offset==X && B-Y_offset==Y){
+        td.className = 'map_current_room' ;
+      }
+      else if(name == 'Nothingness' || name == 'undefined'){
+        td.className = 'map_empty_room' ;
+      }
+      else{
+        td.className = 'map_occupied_room' ;
+      }
+      td.title = '(' + (A-X_offset) + ',' + (B-Y_offset) + ') ' + rooms[B][A].name ;
+      tr.appendChild(td) ;
+    }
+    tbody.appendChild(tr) ;
+  }
+}
+
+function update_room_name(){
+  rooms[Y][X].name = Get('room_name').value ;
+  save_room() ;
+}
+function save_room(){
+  rooms[Y][X].rows = cells ;
+}
+
+// Helper functions
+function getElementsByClassName(className){
+  var elements = document.getElementsByTagName('*') ;
+  var results = new Array() ;
+  for(var i=0 ; i<elements.length ; i++){
+    if(elements[i].className == className) results.push(elements[i]) ;
+  }
+  return results ;
+}
+function      Get(id){ return document.getElementById(id)  ; }
+function Create(type){ return document.createElement(type) ; }
+
+</script>
+</head>
+<body onload="start()">
+<h1>Room editor</h1>
+
+<div id="container">
+
+<table id="uber_table">
+  <tbody>
+    <tr>
+      <td id="uber_cell_A">
+        <h2>Current brush</h2>
+        <table>
+          <tbody>
+            <tr>
+              <th class="info">(A,B):</th>
+              <td class="info" id="td_AB"></td>
+            </tr>
+            <tr>
+              <th class="info">Shape brush:</th>
+              <td class="info" id="td_brush_shape"></td>
+            </tr>
+            <tr>
+              <th class="info">Foreground brush:</th>
+              <td class="info" id="td_brush_foreground"></td>
+            </tr>
+            <tr>
+              <th class="info">Background brush:</th>
+              <td class="info" id="td_brush_background"></td>
+            </tr>
+            <tr>
+              <th class="info">Obstacle brush:</th>
+              <td class="info" id="td_brush_obstacle"></td>
+            </tr>
+            <tr>
+              <th class="info">Medium brush:</th>
+              <td class="info" id="td_brush_medium"></td>
+            </tr>
+            <tr>
+              <th class="info">Cell contents:</th>
+              <td class="info" id="td_cell_contents"></td>
+            </tr>
+            <tr>
+              <th class="info">Current cell:</th>
+              <td class="info" id="td_current_cell"></td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+      <td id="uber_cell_B" rowspan="4">
+        <table id="table_room_name">
+          <tbody>
+            <tr>
+              <th class="info">Room name:</th>
+              <td class="info"><input id="room_name" name="room_name" value="" onChange="update_room_name()"/></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table id="table_room">
+          <tbody id="tbody_room"></tbody>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_C">
+        <h2>Foregrounds</h2>
+        <table id="table_foreground">
+          <tbody id="tbody_foreground">
+            <tr>
+              <td id="foreground_1"></td>
+              <td id="foreground_2"></td>
+              <td id="foreground_3"></td>
+              <td id="foreground_4"></td>
+              <td id="foreground_5"></td>
+              <td id="foreground_6"></td>
+            </tr>
+            <tr>
+              <td id="foreground_7"></td>
+              <td id="foreground_8"></td>
+              <td id="foreground_9"></td>
+              <td id="foreground_10"></td>
+              <td id="foreground_11"></td>
+              <td id="foreground_12"></td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_D">
+        <h2>Backgrounds</h2>
+        <table id="table_background">
+          <tbody id="tbody_background">
+            <tr>
+              <td id="background_0"></td>
+              <td id="background_1"></td>
+              <td id="background_2"></td>
+              <td id="background_3"></td>
+              <td id="background_4"></td>
+              <td id="background_5"></td>
+            </tr>
+            <tr>
+              <td id="background_6"></td>
+              <td id="background_8"></td>
+              <td id="background_9"></td>
+              <td id="background_10"></td>
+              <td id="background_11"></td>
+              <td id="background_12"></td>
+            </tr>
+            <tr>
+              <td id="background_1001"></td>
+              <td id="background_1002"></td>
+              <td id="background_1003"></td>
+              <td id="background_1004"></td>
+              <td id="background_1005"></td>
+              <td id="background_1006"></td>
+              <td id="background_1007"></td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_E">
+        <h2>Obstacle/medium</h2>
+        <form>
+        <table id="table_obstacleMedium">
+          <tbody id="tbody_obstacleMedium">
+            <tr>
+              <th class="info">Obstacle:</th>
+              <td>
+                <select id="obstacle" onmouseup="update_obstacle()">
+                  <option value="1" selected="selected">Solid</option>
+                  <option value="4">Climbable</option>
+                  <option value="8">Bouncy</option>
+                  <option value="2">Water</option>
+                  <option value="3">Fire</option>
+                  <option value="0">Air</option>
+                </select><br />
+              </td>
+            </tr>
+            <tr>
+              <th class="info">Medium:</th>
+              <td>
+                <select id="medium" onmouseup="update_medium()">
+                  <option value="1">Solid</option>
+                  <option value="4">Climbable</option>
+                  <option value="8">Bouncy</option>
+                  <option value="2">Water</option>
+                  <option value="3">Fire</option>
+                  <option value="0" selected="selected">Air</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th class="info">Painter:</th>
+              <td>
+                <select id="painter" onmouseup="update_painter()">
+                  <option value="point" selected="selected">Point</option>
+                  <option value="line">Line</option>
+                  <option value="rectangle">Rectangle</option>
+                  <!--<option value="fill">Fill</option>-->
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </form>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_F" colspan="2">
+        <h2>Shapes</h2>
+        <table id="table_shape">
+          <tbody id="tbody_shape">
+            <tr>
+              <td id="shape_12"></td>
+              <td></td>
+              <td id="shape_0"></td>
+              <td></td>
+              <td id="shape_21"></td>
+              <td id="shape_22"></td>
+              <td id="shape_23"></td>
+              <td id="shape_24"></td>
+              <td id="shape_31"></td>
+              <td id="shape_32"></td>
+              <td id="shape_35"></td>
+              <td id="shape_36"></td>
+              <td id="shape_41"></td>
+              <td id="shape_43"></td>
+              <td id="shape_11"></td>
+              <td id="shape_13"></td>
+              <td id="shape_42"></td>
+              <td id="shape_44"></td>
+              <td id="shape_51"></td>
+              <td id="shape_53"></td>
+            </tr>
+            <tr>
+              <td id="shape_18"></td>
+              <td id="shape_14"></td>
+              <td id="shape_15"></td>
+              <td id="shape_16"></td>
+              <td id="shape_25"></td>
+              <td id="shape_26"></td>
+              <td id="shape_27"></td>
+              <td id="shape_28"></td>
+              <td id="shape_33"></td>
+              <td id="shape_34"></td>
+              <td id="shape_37"></td>
+              <td id="shape_38"></td>
+              <td id="shape_47"></td>
+              <td id="shape_49"></td>
+              <td id="shape_17"></td>
+              <td id="shape_19"></td>
+              <td id="shape_46"></td>
+              <td id="shape_48"></td>
+              <td id="shape_57"></td>
+              <td id="shape_59"></td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_G" colspan="2">
+        <h2>Output</h2>
+        <textarea id="textarea_output" rows="10" cols="100"></textarea>
+      </td>
+    </tr>
+    <tr>
+      <td id="uber_cell_H" colspan="2">
+        <h2>Map</h2>
+        <table id="table_map">
+          <tbody id="tbody_map">
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+</body>
+</html>

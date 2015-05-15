@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>Generic platform game</title>
+<script type="text/javascript" src="js/sprintf.js"     ></script>
+<script type="text/javascript" src="js/settings.js"    ></script>
+<script type="text/javascript" src="js/colors.js"      ></script>
+<script type="text/javascript" src="js/patterns.js"    ></script>
+<script type="text/javascript" src="js/shapes.js"      ></script>
+<script type="text/javascript" src="js/inventory.js"   ></script>
+<script type="text/javascript" src="js/physics.js"     ></script>
+<script type="text/javascript" src="js/draw.js"        ></script>
+<script type="text/javascript" src="js/controls.js"    ></script>
+<script type="text/javascript" src="js/block.js"       ></script>
+<script type="text/javascript" src="js/room.js"        ></script>
+<script type="text/javascript" src="js/movers.js"      ></script>
+<script type="text/javascript" src="js/rooms_data.js"  ></script>
+<script type="text/javascript" src="js/main.js"        ></script>
+<link type="text/css" rel="stylesheet" media="all" href="style.css" />
+</head>
+<body onload="start();">
+<div id="container">
+<table id="inventory">
+  <thead>
+    <tr>
+      <th class="inventory" colspan="999">Inventory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="inventory" id="inventory_0">&nbsp;</td>
+      <td class="inventory" id="inventory_1">&nbsp;</td>
+      <td class="inventory" id="inventory_2">&nbsp;</td>
+      <td class="inventory" id="inventory_3">&nbsp;</td>
+      <td class="inventory" id="inventory_4">&nbsp;</td>
+      <td class="inventory" id="inventory_5">&nbsp;</td>
+      <td class="inventory" id="inventory_6">&nbsp;</td>
+      <td class="inventory" id="inventory_7">&nbsp;</td>
+      <td class="inventory" id="inventory_8">&nbsp;</td>
+      <td class="inventory" id="inventory_9">&nbsp;</td>
+    </tr>
+  </tbody>
+</table>
+<h2 id="room_name"></h2>
+<table id="uber_table">
+  <tbody>
+    <tr>
+      <td id="canvas_wrapper">
+        <canvas id="canvas" width="500" height="375"></canvas>
+      </td>
+      <td id="mask_wrapper">
+        <table id="stats">
+          <tbody>
+            <tr><th>xy</th><td id="xy"></td></tr>
+            <tr><th>AB</th><td id="AB"></td></tr>
+            <tr><th>Health</th> <td id="health"></td></tr>
+            <tr><th>Pain</th>   <td id="pain"  ></td></tr>
+            <tr><th>Deaths</th> <td id="deaths"  ></td></tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<h2 id="save_image" onclick="save_image()">Save image</h2>
+<div id="debug"></div>
+<img id="canvas_img" width="500" height="375"/>
+</body>
+</html>
