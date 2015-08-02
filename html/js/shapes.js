@@ -67,9 +67,9 @@ function shape(id, name, polygon){
   }
 
   this.draw = function(context,x,y){
-    moveTo(x+this.polygon[0][0], y+this.polygon[0][1]) ;
+    moveTo(drawScale*(x+this.polygon[0][0]), drawScale*(y+this.polygon[0][1])) ;
     for(i=1 ; i<this.polygon.length ; i++){
-      lineTo(x+this.polygon[i][0], y+this.polygon[i][1]) ;
+      lineTo(drawScale*(x+this.polygon[i][0]), drawScale*(y+this.polygon[i][1])) ;
     }
   }
 }

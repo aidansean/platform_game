@@ -33,17 +33,6 @@ function update(){
     update_stats() ;
   }
   draw() ;
-  if(false){
-    var string = '' ;
-    for(var i=0 ; i<mask.length ; i++){
-      for(var j=0 ; j<mask[i].length ; j++){
-        string = string + ' ' + mask[i][j] ;
-      }
-      string = string + '<br />\n' ;
-    }
-    Get('debug').innerHTML = string ;
-  }
-
   window.setTimeout('update()', delay) ;
 }
 

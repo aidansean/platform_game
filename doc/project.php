@@ -1,4 +1,6 @@
 <?php
+include_once($_SERVER['FILE_PREFIX']."/project_list/project_object.php") ;
 $github_uri   = "https://github.com/aidansean/platform_game" ;
 $blogpost_uri = "http://aidansean.com/projects/?tag=platform_game" ;
+$project = new project_object("platform_game", "Generic platform game", "https://github.com/aidansean/platform_game", "http://aidansean.com/projects/?tag=platform_game", "platform_game/images/project.jpg", "platform_game/images/project_bw.jpg", "This project is something I've been working for a long time and something I have wanted to develop for as long as I can remember.  It's a platform game strongly inspired by the BBC Micro game, Citadel.  (I have another project dedicated to mapping <a href=\"http://aidansean.com/projects/?p=141\">Citadel</a>.)  When I was younger I would dream about playing non-existant extra levels in Citadel, and when I started recreational programming I would sometimes dream about making new levels for the game.", "Games", "canvas,CSS,HTML,JavaScript") ;
 ?>

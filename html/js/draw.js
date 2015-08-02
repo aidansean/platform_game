@@ -1,4 +1,4 @@
-function clear(){ clearRect(0,0,w,h) ; }
+function clear(){ clearRect(0,0,drawScale*w,drawScale*h) ; }
 function drawRoom(){
   var room = get_room_coords(pc.A,pc.B).rows ;
   var AA = AAFromX(pc.x) ;
@@ -15,7 +15,7 @@ function drawRoom(){
     context.fillStyle = color_room ;
 
     updateTheseCells = [] ;
-    fillRect(0-cw,0-ch,w+2*cw,h+2*ch) ;
+    fillRect(drawScale*(0-cw),drawScale*(0-ch),drawScale*(w+2*cw),drawScale*(h+2*ch)) ;
     for(var i=AAStart ; i<=AAEnd ; i++){
       for(var j=BBStart ; j<=BBEnd ; j++){
         var added_cell = false ;
@@ -41,9 +41,9 @@ function drawRoom(){
   for(var i=AAStart ; i<=AAEnd ; i++){
     for(var j=BBStart ; j<=BBEnd ; j++){
       if(drawFullRoom==false){
-      	clearRect(i*cw,j*ch,cw,ch) ;
+      	clearRect(drawScale*i*cw,drawScale*j*ch,drawScale*cw,drawScale*ch) ;
       	context.fillStyle = color_room ;
-      	fillRect(i*cw,j*ch,cw,ch) ;
+      	fillRect(drawScale*i*cw,drawScale*j*ch,drawScale*cw,drawScale*ch) ;
       }
       if(j>=room   .length || j<0) continue ;
       if(i>=room[j].length) continue ;
@@ -54,7 +54,6 @@ function drawRoom(){
       }
     }
   }
-  //alert(updateTheseCells.length) ;
   for(var i=0 ; i<updateTheseCells.length ; i++){
     var m = updateTheseCells[i][1] ;
     var n = updateTheseCells[i][0] ;
@@ -66,15 +65,15 @@ function drawSquare(){
   if(invisible_player) return ;
   if(pc.dead){
     context.fillStyle = 'rgb(' + (6*(freeze+1)) + ',' + (6*(freeze+1)) + ',' + (6*(freeze+1)) + ')' ;
-    fillRect(pc.xDeath-pw*0.5,pc.yDeath-ph*0.5,2*pw*0.5+1,2*ph*0.5+1) ;
+    fillRect(drawScale*(pc.xDeath-pw*0.5),drawScale*(pc.yDeath-ph*0.5),drawScale*(2*pw*0.5+1),drawScale*(2*ph*0.5+1)) ;
     context.fillStyle = 'rgb(0,' + (6*freeze) + ',0)' ;
-    fillRect(pc.xDeath-pw*0.5+1,pc.yDeath-ph*0.5+1,2*pw*0.5-1,2*ph*0.5-1) ;
+    fillRect(drawScale*(pc.xDeath-pw*0.5+1),drawScale*(pc.yDeath-ph*0.5+1),drawScale*(2*pw*0.5-1),drawScale*(2*ph*0.5-1)) ;
   }
   else{
     context.fillStyle = 'rgb(255,255,255)' ;
-    fillRect(pc.x-pw*0.5,pc.y-ph*0.5,2*pw*0.5+1,2*ph*0.5+1) ;
+    fillRect(drawScale*(pc.x-pw*0.5),drawScale*(pc.y-ph*0.5),drawScale*(2*pw*0.5+1),drawScale*(2*ph*0.5+1)) ;
     context.fillStyle = color_square ;
-    fillRect(pc.x-pw*0.5+1,pc.y-ph*0.5+1,2*pw*0.5-1,2*ph*0.5-1) ;
+    fillRect(drawScale*(pc.x-pw*0.5+1),drawScale*(pc.y-ph*0.5+1),drawScale*(2*pw*0.5-1),drawScale*(2*ph*0.5-1)) ;
   }
 }
 function erasePlayer(){

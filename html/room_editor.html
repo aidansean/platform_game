@@ -161,7 +161,8 @@ function update_cell_contents(){
   cell_contents = [brush['shape'],brush['foreground'],brush['background'],brush['obstacle'],brush['medium'],[]] ;
 }
 
-function update(do_write_output=true){
+function update(do_write_output){
+  do_write_output = true ;
   update_cell_contents() ;
 
   Get('td_AB'              ).innerHTML = '(' + X + ',' + Y + ')' ;
@@ -244,7 +245,7 @@ function cells_match(k, l, i, j){
   return true ;
 }
 
-function make_mini_canvas(name, title, args, brush_name, transparent=false){
+function make_mini_canvas(name, title, args, brush_name, transparent){
   var canvas = Create('canvas') ;
   canvas.style.width  = cw ;
   canvas.style.height = ch ;
@@ -253,7 +254,7 @@ function make_mini_canvas(name, title, args, brush_name, transparent=false){
   canvas.id = name ;
   canvas.onclick = function(e){
     if(e.target.title.match('cell_')){
-      var parts = e.target.title.split('_') ;
+      var parts = e.target.title.split(' ')[0].split('_') ;
       var i = parts[1] ;
       var j = parts[2] ;
       if(i<0 || i==nCols || j<0 || j==nRows){

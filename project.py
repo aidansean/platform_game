@@ -3,10 +3,13 @@ from project_module import project_object, image_object, link_object, challenge_
 p = project_object('platform_game', 'Generic platform game')
 p.domain = 'http://www.aidansean.com/'
 p.path = 'platform_game'
-p.preview_image_ = image_object('http://placekitten.com.s3.amazonaws.com/homepage-samples/408/287.jpg', 408, 287)
+p.preview_image    = image_object('%s/images/project.jpg'   %p.path, 150, 250)
+p.preview_image_bw = image_object('%s/images/project_bw.jpg'%p.path, 150, 250)
 p.folder_name = 'aidansean'
 p.github_repo_name = 'platform_game'
 p.mathjax = True
+p.tags = 'Games'
+p.technologies = 'canvas,CSS,HTML,JavaScript'
 p.links.append(link_object(p.domain, '%s/play.php'%p.path, 'Live page (Play)'))
 p.links.append(link_object(p.domain, '%s/edit.php'%p.path, 'Live page (Edit)'))
 p.introduction = 'This project is something I\'ve been working for a long time and something I have wanted to develop for as long as I can remember.  It\'s a platform game strongly inspired by the BBC Micro game, Citadel.  (I have another project dedicated to mapping <a href="http://aidansean.com/projects/?p=141">Citadel</a>.)  When I was younger I would dream about playing non-existant extra levels in Citadel, and when I started recreational programming I would sometimes dream about making new levels for the game.'

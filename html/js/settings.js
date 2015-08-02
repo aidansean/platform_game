@@ -18,6 +18,7 @@ var context ;
 var drawFullRoom = true  ;
 var showMask     = false ;
 var updateTheseCells = [] ;
+var drawScale = 1.0 ;
 
 var nDeaths = 0 ;
 
@@ -62,7 +63,7 @@ var health = 100 ;
 var pain   = 0 ;
 
 var nJumps        = 0 ;
-var nAllowedJumps = 2 ;
+var nAllowedJumps = 1 ;
 
 // When did we last collide down?
 var lastCollideDown = 0 ;

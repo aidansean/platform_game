@@ -20,7 +20,7 @@ include_once($_SERVER['FILE_PREFIX'] . '/_core/preamble.php') ;
 ?>
 
 <h2 id="room_name"></h2>
-<canvas id="canvas" width="500" height="375"></canvas>
+<canvas style="width:750px;height:563px" id="canvas" width="500" height="375"></canvas>
 <table id="stats">
   <tbody>
     <tr><th>xy</th><td id="xy"></td></tr>

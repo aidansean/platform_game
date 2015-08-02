@@ -19,7 +19,7 @@ function empty_row(){
   return emptyRow ;
 }
 
-function room_object(name, rows, movers=[]){
+function room_object(name, rows, movers){
   if(name=='') name = 'Nothingness' ;
   this.name = name ;
   this.movers = movers ;

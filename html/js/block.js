@@ -34,7 +34,7 @@ function block(){
   this.medium     = 0 ; // air
   this.obstacle   = 0 ; // none
   this.things = new Array() ;
-  this.draw = function(force_draw_empty=false){
+  this.draw = function(force_draw_empty){
     if(this.shape_index==0){
       if(force_draw_empty==false && this.background==0) return ;
       if(this.background){
@@ -43,7 +43,7 @@ function block(){
       else{
         context.fillStyle = '#000000' ;
       }
-      fillRect(this.x,this.y,cw,ch) ;
+      fillRect(drawScale*this.x,drawScale*this.y,drawScale*cw,drawScale*ch) ;
       return ;
     }
     context.beginPath() ;
@@ -51,11 +51,11 @@ function block(){
     if(this.background){
       if(this.background.substring){
         context.fillStyle = this.background ;
-        fillRect(this.x,this.y,cw,ch) ;
+        fillRect(drawScale*this.x,drawScale*this.y,drawScale*cw,drawScale*ch) ;
       }
       else{
         context.fillStyle = this.background[Math.floor(roomCount/10)%this.background.length] ;
-        fillRect(this.x,this.y,cw,ch) ;
+        fillRect(drawScale*this.x,drawScale*this.y,drawScale*cw,drawScale*ch) ;
       }
     }
     // Fill in obstacle with foreground pattern
